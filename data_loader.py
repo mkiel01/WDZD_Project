@@ -1,22 +1,22 @@
-from sklearn.datasets import fetch_openml
 import pandas as pd
-import numpy as np
+import streamlit as st
 
-# Load MNIST data from OpenML
-mnist = fetch_openml('mnist_784', version=1)
+def load_data(uploaded_file):
+    data = pd.read_csv(uploaded_file)
+    return data
 
-# Convert to DataFrame
-full_data = pd.DataFrame(data=mnist.data, columns=[f'pixel{i}' for i in range(784)])
-full_data['label'] = mnist.target
+def save_column_changes(data, new_column_names):
+    data.rename(columns=new_column_names, inplace=True)
+    return data
 
-# Sample 10% of the data
-sampled_data = full_data.sample(frac=0.1, random_state=42)  # Random state for reproducibility
+def remove_columns(data, columns_to_remove):
+    data.drop(columns=columns_to_remove, inplace=True)
+    return data
 
-file_path = '/Users/michalkielkowski/Desktop/infa-all/magisterka/wizualizacja_duzych_zbiorów_danych/Projekt/WDZD_Project/data/mnist_dataset_sampled.csv'
-
-# Save to CSV
-sampled_data.to_csv(file_path, index=False)
-print("end\n")
-
-
-
+def add_column(data, new_col_name, new_col_values):
+    new_values_list = [val.strip() for val in new_col_values.split(",")]
+    if len(new_values_list) == len(data):
+        data[new_col_name] = new_values_list
+    else:
+        st.error("The number of values does not match the number of rows in the dataset")
+    return data

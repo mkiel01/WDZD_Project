@@ -2,7 +2,8 @@ import altair as alt
 import streamlit as st
 
 from data_loader import load_data
-from preprocessing import preprocess_text, vectorize_text
+from preprocessing import (preprocess_text, vectorize_with_avg_word2vec,
+                           vectorize_with_tfidf)
 from tsne import perform_tsne
 from ui import adjust_data_size_ui
 
@@ -28,7 +29,7 @@ def main():
         text_data = preprocess_text(data["text"])
 
         # Convert text data to TF-IDF features
-        text_vectors = vectorize_text(text_data)
+        text_vectors = vectorize_with_avg_word2vec(text_data)
 
         # Map sentiment labels to numerical values
         label_mapping = {0: "negative", 2: "neutral", 4: "positive"}

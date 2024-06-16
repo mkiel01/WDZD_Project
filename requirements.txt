@@ -1,5 +1,6 @@
 streamlit
 altair
+gensim
 pandas
 numpy
 scikit-learn

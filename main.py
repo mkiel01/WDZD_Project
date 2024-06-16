@@ -1,17 +1,16 @@
+import altair as alt
 import streamlit as st
-import matplotlib.pyplot as plt
 
 from data_loader import load_data
-from tsne import perform_tsne
-from ui import (
-    adjust_data_size_ui,
-    show_data_button,
-)
 from preprocessing import preprocess_text, vectorize_text
+from tsne import perform_tsne
+from ui import adjust_data_size_ui
 
 
 def main():
     st.title("Twitter Sentiment t-SNE Reduction")
+
+    random_seed = st.number_input(label="Random seed", min_value=0)
 
     uploaded_file = st.file_uploader("Choose a CSV file with Tweets", type="csv")
 
@@ -20,14 +19,10 @@ def main():
 
     data = load_data(uploaded_file)
 
-    show_data_button(data, "Show Original Data")
-
-    st.subheader("Adjust Data Size")
-    data_size_percentage = adjust_data_size_ui()
-    if data_size_percentage < 100:
-        data = data.sample(frac=data_size_percentage / 100)
-
-    show_data_button(data, "Show Modified Data")
+    data_len = len(data)
+    desired_data_len = adjust_data_size_ui(data_len)
+    if desired_data_len < data_len:
+        data = data.sample(n=desired_data_len, random_state=random_seed)
 
     if st.button("Perform t-SNE"):
         text_data = preprocess_text(data["text"])
@@ -35,10 +30,9 @@ def main():
         # Convert text data to TF-IDF features
         text_vectors = vectorize_text(text_data)
 
-        labels = data["target"]
-
         # Map sentiment labels to numerical values
-        # label_mapping = {"positive": 0, "neutral": 1, "negative": 2}
+        label_mapping = {0: "negative", 2: "neutral", 4: "positive"}
+        data["label"] = data["target"].apply(lambda v: label_mapping.get(v, ""))
 
         # Determine the perplexity based on the number of samples
         num_samples = text_vectors.shape[0]
@@ -46,20 +40,20 @@ def main():
             30, num_samples // 3
         )  # Choose a smaller perplexity if the sample size is small
 
-        st.write("Performing t-SNE...")
-        tsne_results = perform_tsne(text_vectors, perplexity=perplexity)
-
-        fig, ax = plt.subplots()
-        scatter = ax.scatter(
-            tsne_results[:, 0],
-            tsne_results[:, 1],
-            c=labels,
-            cmap="tab10",
-            alpha=0.6,
+        tsne_results = perform_tsne(
+            text_vectors, perplexity=perplexity, random_seed=random_seed
         )
-        legend = ax.legend(*scatter.legend_elements(), title="Sentiment")
-        ax.add_artist(legend)
-        st.pyplot(fig)
+        data["x"], data["y"] = tsne_results[:, 0], tsne_results[:, 1]
+
+        points = (
+            alt.Chart(data)
+            .mark_point()
+            .encode(
+                x="x", y="y", color="label", tooltip=["label", "user", "date", "text"]
+            )
+        ).interactive()
+
+        st.altair_chart(points, use_container_width=True)
 
 
 if __name__ == "__main__":

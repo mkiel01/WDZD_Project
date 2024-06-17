@@ -4,4 +4,6 @@ gensim
 pandas
 numpy
 scikit-learn
+umap-learn
+pacmap
 matplotlib

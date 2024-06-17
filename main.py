@@ -5,9 +5,15 @@ from data_loader import load_data
 from preprocessing import (
     preprocess_text,
     vectorize_with_avg_word2vec,
+    vectorize_with_pretrained_avg_word2vec,
+    vectorize_with_doc2vec,
     vectorize_with_tfidf,
 )
-from tsne import perform_tsne
+from visualizers import (
+    perform_tsne,
+    perform_umap,
+    perform_pacmap,
+)
 
 
 def on_change():
@@ -39,7 +45,14 @@ def main():
         data = data.sample(n=desired_data_len, random_state=random_seed)
 
     option_vectorizer = st.selectbox(
-        "Select vectorizer", ("TF-IDF", "Averaged word2vec"), on_change=on_change
+        "Select vectorizer",
+        (
+            "TF-IDF",
+            "averaged word2vec",
+            "pretrained averaged word2vec",
+            "doc2vec",
+        ),
+        on_change=on_change,
     )
 
     vec_button = st.button("Vectorize")
@@ -48,8 +61,12 @@ def main():
         match option_vectorizer:
             case "TF-IDF":
                 text_vectors = vectorize_with_tfidf(text_data)
-            case "Averaged word2vec":
+            case "averaged word2vec":
                 text_vectors = vectorize_with_avg_word2vec(text_data)
+            case "pretrained averaged word2vec":
+                text_vectors = vectorize_with_pretrained_avg_word2vec(text_data)
+            case "doc2vec":
+                text_vectors = vectorize_with_doc2vec(text_data)
 
         st.session_state["text_vectors"] = text_vectors
     elif "text_vectors" in st.session_state:
@@ -57,7 +74,26 @@ def main():
     else:
         return
 
-    if not st.button("Perform t-SNE"):
+    option_visualizer = st.selectbox(
+        "Select visualizer",
+        (
+            "t-SNE",
+            "UMAP",
+            "PaCMAP",
+        ),
+    )
+
+    vis_button = st.button("Visualize")
+    visualizer = None
+    if vis_button:
+        match option_visualizer:
+            case "t-SNE":
+                visualizer = perform_tsne
+            case "UMAP":
+                visualizer = perform_umap
+            case "PaCMAP":
+                visualizer = perform_pacmap
+    else:
         return
 
     # Map sentiment labels to numerical values
@@ -69,10 +105,9 @@ def main():
         30, num_samples // 3
     )  # Choose a smaller perplexity if the sample size is small
 
-    tsne_results = perform_tsne(
-        text_vectors, perplexity=perplexity, random_seed=random_seed
-    )
-    data["x"], data["y"] = tsne_results[:, 0], tsne_results[:, 1]
+    results = visualizer(text_vectors, random_seed=random_seed)
+
+    data["x"], data["y"] = results[:, 0], results[:, 1]
 
     points = (
         alt.Chart(data)

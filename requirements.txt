@@ -7,3 +7,4 @@ scikit-learn
 umap-learn
 pacmap
 matplotlib
+scipy==1.12

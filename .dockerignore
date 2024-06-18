@@ -1,0 +1,4 @@
+venv/
+.streamlit/
+*.csv
+__pycache__

@@ -24,7 +24,7 @@ def run_model(twitter, column_name = "text"):
 
     def calculate_sentiment_with_outside_model():
       global BATCH_COUNT
-      while BATCH_COUNT < (len(twitter) / BATCH_SIZE):
+      while BATCH_COUNT < (len(twitter) // BATCH_SIZE):
         print("Starting batch " + str(BATCH_COUNT+1))
         local_sentiment_calculated = pipe(tweet_list[(BATCH_SIZE * BATCH_COUNT):(BATCH_SIZE * (BATCH_COUNT + 1))])
         print("Completed batch " + str(BATCH_COUNT+1) + " processed " + str((BATCH_COUNT + 1) * BATCH_SIZE) + "/" + str(len(twitter)) + "tweets." )

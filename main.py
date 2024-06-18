@@ -47,30 +47,27 @@ def main():
     if desired_data_len < data_len:
         data = data.sample(n=desired_data_len, random_state=random_seed)
 
-    add_sentiment = st.checkbox("Add BERTweet Sentiment Analysis as feature", value=False)
-    if add_sentiment:
+  
         
 
-        label_option = st.selectbox(
-            "Choose sentiment labeling option",
-            ("Map existing labels", "Use labels from model"),
-            index=0  # Default to mapping existing labels
+    label_option = st.selectbox(
+        "Choose sentiment labeling option",
+        ("Map existing labels", "Use labels from model BERTweet Sentiment"),
+        index=0  # Default to mapping existing labels
         )
 
-        if label_option == "Map existing labels":
+    if label_option == "Map existing labels":
             # Map sentiment labels to numerical values
-            label_mapping = {0: "negative", 2: "neutral", 4: "positive"}
-            data["label"] = data["target"].apply(lambda v: label_mapping.get(v, ""))
-        elif label_option == "Use labels from model":
-            # Example: Add new labels based on sentiment scores
-            sentiment_scores = run_model(data)  # Run BERTweet sentiment analysis
-            data_with_outer_sentiment = combine(data, sentiment_scores)  # Combine sentiment scores with original data
-            label_mapping = {0: "negative", 2: "neutral", 4: "positive"}
-            data["label"] = data_with_outer_sentiment["outer_sentiment"].apply(lambda v: label_mapping.get(v, ""))
-
-    else:
         label_mapping = {0: "negative", 2: "neutral", 4: "positive"}
         data["label"] = data["target"].apply(lambda v: label_mapping.get(v, ""))
+    elif label_option == "Use labels from model BERTweet Sentiment":
+            # Example: Add new labels based on sentiment scores
+        sentiment_scores = run_model(data)  # Run BERTweet sentiment analysis
+        data_with_outer_sentiment = combine(data, sentiment_scores)  # Combine sentiment scores with original data
+        label_mapping = {0: "negative", 2: "neutral", 4: "positive"}
+        data["label"] = data_with_outer_sentiment["outer_sentiment"].apply(lambda v: label_mapping.get(v, ""))
+
+    
 
 
     option_vectorizer = st.selectbox(

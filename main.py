@@ -153,13 +153,33 @@ def main():
 
     data["x"], data["y"] = results[:, 0], results[:, 1]
 
+    color = alt.Color("label")
+    click = alt.selection_multi(encodings=["color"])
+    brush = alt.selection_interval(encodings=["x", "y"])
     points = (
-        alt.Chart(data)
+        alt.Chart()
         .mark_point()
-        .encode(x="x", y="y", color="label", tooltip=["label", "user", "date", "text"])
-    ).interactive()
+        .encode(x="x", y="y", color=alt.condition(brush, "label", alt.value("lightgray")), tooltip=["label", "user", "date", "text"])
+    ).transform_filter(click)\
+    .add_selection(brush)\
+    
+    points_interactive = (
+        alt.Chart()
+        .mark_point()
+        .encode(x="x", y="y", color=alt.condition(brush, "label", alt.value("lightgray")), tooltip=["label", "user", "date", "text"])
+    ).transform_filter(click)\
+    .interactive()
 
-    st.altair_chart(points, use_container_width=True)
+    hist = (
+        alt.Chart()
+        .mark_bar()
+        .encode(x="count()", y="label", color=alt.condition(click, "label", alt.value("lightgray")))
+    ).add_selection(click)\
+    .transform_filter(brush)
+
+    chart = alt.vconcat(points, hist, points_interactive, data=data)
+
+    st.altair_chart(chart)
 
     # Display metrics
     metrics_kg = local_metric.visualize_kg()

@@ -17,6 +17,7 @@ from visualizers import (
     perform_pacmap,
 )
 from metrics import LocalMetric
+from network import * 
 
 def on_change():
     if "text_vectors" in st.session_state:
@@ -45,6 +46,26 @@ def main():
     )
     if desired_data_len < data_len:
         data = data.sample(n=desired_data_len, random_state=random_seed)
+
+    add_sentiment = st.checkbox("Add BERTweet Sentiment Analysis as feature", value=False)
+    if add_sentiment:
+        sentiment_scores = run_model(data)  # Run BERTweet sentiment analysis
+        data_with_outer_sentiment = combine(data, sentiment_scores)  # Combine sentiment scores with original data
+
+        label_option = st.selectbox(
+            "Choose sentiment labeling option",
+            ("Map existing labels", "Add new labels"),
+            index=0  # Default to mapping existing labels
+        )
+
+        if label_option == "Map existing labels":
+            # Map sentiment labels to numerical values
+            label_mapping = {0: "negative", 2: "neutral", 4: "positive"}
+            data["label"] = data["target"].apply(lambda v: label_mapping.get(v, ""))
+        elif label_option == "Add new labels":
+            # Example: Add new labels based on sentiment scores
+            label_mapping = {0: "negative", 2: "neutral", 4: "positive"}
+            data["label"] = data_with_outer_sentiment["outer_sentiment"].apply(lambda v: label_mapping.get(v, ""))
 
     option_vectorizer = st.selectbox(
         "Select vectorizer",
@@ -76,38 +97,45 @@ def main():
     else:
         return
 
+
+
     option_visualizer = st.selectbox(
         "Select visualizer",
-        (
-            "t-SNE",
-            "UMAP",
-            "PaCMAP",
-        ),
+        ("t-SNE", "UMAP", "PaCMAP"),
     )
 
+    if option_visualizer == "t-SNE":
+        n_components = st.number_input("t-SNE: Number of Components", value=2, min_value=1, max_value=3)
+        perplexity = st.number_input("t-SNE: Perplexity", value=30, min_value=5, max_value=50)
+        learning_rate = st.number_input("t-SNE: Learning Rate", value=200.0, min_value=10.0, max_value=1000.0)
+    elif option_visualizer == "UMAP":
+        n_components = st.number_input("UMAP: Number of Components", value=2, min_value=1, max_value=3)
+        n_neighbors = st.number_input("UMAP: Number of Neighbors", value=15, min_value=2, max_value=50)
+        min_dist = st.number_input("UMAP: Minimum Distance", value=0.1, min_value=0.001, max_value=0.5)
+    elif option_visualizer == "PaCMAP":
+        n_components = st.number_input("PaCMAP: Number of Components", value=2, min_value=1, max_value=3)
+        n_neighbors = st.number_input("PaCMAP: Number of Neighbors", value=10, min_value=3, max_value=50)
+
     vis_button = st.button("Visualize")
-    visualizer = None
     if vis_button:
         match option_visualizer:
             case "t-SNE":
-                visualizer = perform_tsne
+                results = perform_tsne(text_vectors, n_components=n_components, perplexity=perplexity, learning_rate=learning_rate, random_seed=random_seed)
             case "UMAP":
-                visualizer = perform_umap
+                results = perform_umap(text_vectors, n_components=n_components, n_neighbors=n_neighbors, min_dist=min_dist, random_seed=random_seed)
             case "PaCMAP":
-                visualizer = perform_pacmap
-    else:
-        return
+                results = perform_pacmap(text_vectors, n_components=n_components, n_neighbors=n_neighbors, random_seed=random_seed)
 
-    # Map sentiment labels to numerical values
-    label_mapping = {0: "negative", 2: "neutral", 4: "positive"}
-    data["label"] = data["target"].apply(lambda v: label_mapping.get(v, ""))
+    # # Map sentiment labels to numerical values
+    # label_mapping = {0: "negative", 2: "neutral", 4: "positive"}
+    # data["label"] = data["target"].apply(lambda v: label_mapping.get(v, ""))
     # Determine the perplexity based on the number of samples
     num_samples = text_vectors.shape[0]
     perplexity = min(
         30, num_samples // 3
     )  # Choose a smaller perplexity if the sample size is small
 
-    results = visualizer(text_vectors, random_seed=random_seed)
+    # results = visualizer(text_vectors, random_seed=random_seed)
 
     # Calculate metrics using LocalMetric class
     local_metric = LocalMetric()

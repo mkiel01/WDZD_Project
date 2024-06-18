@@ -2,3 +2,4 @@ venv/
 .streamlit/
 *.csv
 __pycache__
+results/*

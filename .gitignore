@@ -3,3 +3,4 @@ __pycache__/
 *.pkg
 *.csv
 venv/
+results/*

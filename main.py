@@ -1,3 +1,5 @@
+import os
+import numpy as np
 import altair as alt
 import streamlit as st
 
@@ -14,7 +16,7 @@ from visualizers import (
     perform_umap,
     perform_pacmap,
 )
-
+from metrics import LocalMetric
 
 def on_change():
     if "text_vectors" in st.session_state:
@@ -107,6 +109,10 @@ def main():
 
     results = visualizer(text_vectors, random_seed=random_seed)
 
+    # Calculate metrics using LocalMetric class
+    local_metric = LocalMetric()
+    local_metric.calculate_knn_gain_and_dr_quality(text_vectors, results, data["label"].values, option_visualizer)
+
     data["x"], data["y"] = results[:, 0], results[:, 1]
 
     points = (
@@ -117,6 +123,22 @@ def main():
 
     st.altair_chart(points, use_container_width=True)
 
+    # Display metrics
+    metrics = local_metric.visualize()
+    mean_L_cf = np.mean(local_metric.L_cf)
+    st.write(f"Mean class fidelity (CF): {mean_L_cf:.4f}")
+    
+    dr_quality_plot_path = "results/DR quality.png"
+    if os.path.exists(dr_quality_plot_path):
+        st.image(dr_quality_plot_path, caption="DR Quality Plot")
+    else:
+        st.error("DR Quality Plot not found.")
+
+    knn_gain_plot_path = "results/KNN gain.png"
+    if os.path.exists(knn_gain_plot_path):
+        st.image(knn_gain_plot_path, caption="KNN Gain Plot")
+    else:
+        st.error("KNN Gain Plot not found.")
 
 if __name__ == "__main__":
     main()

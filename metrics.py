@@ -248,13 +248,7 @@ def viz_qa(
     ax.set_ylabel(ylabel, fontsize=sax)
     # plt.tight_layout()
 
-    # Showing the figure
-    fig.savefig(
-        "./results/{}.png".format(
-            tit
-        ),
-        dpi=fig.dpi,
-    )
+    return fig
 
 
 def calculate_cf_nn(X_hd, X_ld, labels, nn_max=100):
@@ -340,13 +334,13 @@ class LocalMetric:
         self.Lls.append("solid")
         self.number_of_methods = self.number_of_methods + 1
 
-    def visualize(self):
+    def visualize_rnx(self):
         Lmarkers = random.sample(markers, self.number_of_methods)
         Lcols = random.sample(colors, self.number_of_methods)
         Lmedw = [1.0] * self.number_of_methods
         Lsdots = [12] * self.number_of_methods
 
-        viz_qa(
+        return viz_qa(
             Ly=self.L_rnx,
             Lmarkers=Lmarkers,
             Lcols=Lcols,
@@ -358,8 +352,13 @@ class LocalMetric:
             xlabel="Neighborhood size $K$",
             ylabel="$R_{NX}(K)$",
         )
+    def visualize_kg(self):
+        Lmarkers = random.sample(markers, self.number_of_methods)
+        Lcols = random.sample(colors, self.number_of_methods)
+        Lmedw = [1.0] * self.number_of_methods
+        Lsdots = [12] * self.number_of_methods
 
-        viz_qa(
+        return viz_qa(
             Ly=self.L_kg,
             Lmarkers=Lmarkers,
             Lcols=Lcols,
@@ -371,5 +370,3 @@ class LocalMetric:
             xlabel="Neighborhood size $K$",
             ylabel="$G_{NN}(K)$",
         )
-
-        print("Finished.")

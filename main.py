@@ -124,21 +124,14 @@ def main():
     st.altair_chart(points, use_container_width=True)
 
     # Display metrics
-    metrics = local_metric.visualize()
+    metrics_kg = local_metric.visualize_kg()
+    metrics_rnx = local_metric.visualize_rnx()
+    
     mean_L_cf = np.mean(local_metric.L_cf)
     st.write(f"Mean class fidelity (CF): {mean_L_cf:.4f}")
     
-    dr_quality_plot_path = "results/DR quality.png"
-    if os.path.exists(dr_quality_plot_path):
-        st.image(dr_quality_plot_path, caption="DR Quality Plot")
-    else:
-        st.error("DR Quality Plot not found.")
-
-    knn_gain_plot_path = "results/KNN gain.png"
-    if os.path.exists(knn_gain_plot_path):
-        st.image(knn_gain_plot_path, caption="KNN Gain Plot")
-    else:
-        st.error("KNN Gain Plot not found.")
+    st.pyplot(metrics_kg)
+    st.pyplot(metrics_rnx)
 
 if __name__ == "__main__":
     main()

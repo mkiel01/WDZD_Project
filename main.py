@@ -44,7 +44,7 @@ def main():
     option_dataset = st.selectbox(
         "Dataset",
         (
-            "custom",
+            "load from csv file",
             "url to parquet file",
             "airbnb_embeddings",
             "embedded_movies_small",
@@ -53,7 +53,7 @@ def main():
     )
 
     match option_dataset:
-        case "custom":
+        case "load from csv file":
             uploaded_file = st.file_uploader(
                 "Choose a CSV file", type="csv", on_change=remove_data_and_text_vectors
             )

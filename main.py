@@ -28,6 +28,8 @@ def main():
 
     random_seed = st.number_input(label="Random seed", min_value=0)
 
+
+
     uploaded_file = st.file_uploader("Choose a CSV file with Tweets", type="csv")
 
     if uploaded_file is None:
@@ -47,8 +49,9 @@ def main():
         data = data.sample(n=desired_data_len, random_state=random_seed)
 
     option_vectorizer = st.selectbox(
-        "Select vectorizer",
+        "Vectorizer/Embeddings",
         (
+            "existing embeddings",
             "TF-IDF",
             "averaged word2vec",
             "pretrained averaged word2vec",
@@ -57,19 +60,25 @@ def main():
         on_change=on_change,
     )
 
+    match option_vectorizer:
+        case "existing embeddings":
+            embedding_col = st.selectbox(
+                "Column with embeddings", data.columns,
+            )
+            vectorizer = lambda _: data[embedding_col]
+        case "TF-IDF":
+            vectorizer = vectorize_with_tfidf
+        case "averaged word2vec":
+            vectorizer = vectorize_with_avg_word2vec
+        case "pretrained averaged word2vec":
+            vectorizer = vectorize_with_pretrained_avg_word2vec
+        case "doc2vec":
+            vectorizer = vectorize_with_doc2vec
+
     vec_button = st.button("Vectorize")
     if vec_button:
         text_data = preprocess_text(data["text"])
-        match option_vectorizer:
-            case "TF-IDF":
-                text_vectors = vectorize_with_tfidf(text_data)
-            case "averaged word2vec":
-                text_vectors = vectorize_with_avg_word2vec(text_data)
-            case "pretrained averaged word2vec":
-                text_vectors = vectorize_with_pretrained_avg_word2vec(text_data)
-            case "doc2vec":
-                text_vectors = vectorize_with_doc2vec(text_data)
-
+        text_vectors = vectorizer(text_data)
         st.session_state["text_vectors"] = text_vectors
     elif "text_vectors" in st.session_state:
         text_vectors = st.session_state["text_vectors"]

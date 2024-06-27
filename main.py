@@ -1,3 +1,5 @@
+from functools import partial
+
 import numpy as np
 import pandas as pd
 import altair as alt
@@ -43,6 +45,7 @@ def main():
         "Dataset",
         (
             "custom",
+            "url to parquet file",
             "airbnb_embeddings",
             "embedded_movies_small",
         ),
@@ -52,9 +55,12 @@ def main():
     match option_dataset:
         case "custom":
             uploaded_file = st.file_uploader(
-                "Choose a CSV file with Tweets", type="csv"
+                "Choose a CSV file", type="csv", on_change=remove_data_and_text_vectors
             )
             data_loader = lambda: load_data(uploaded_file)
+        case "url to parquet file":
+            url = st.text_input("Parquet URL", on_change=remove_data_and_text_vectors)
+            data_loader = lambda: pd.read_parquet(url)
         case "airbnb_embeddings":
             data_loader = lambda: pd.read_parquet(
                 "https://huggingface.co/datasets/MongoDB/airbnb_embeddings/resolve/refs%2Fconvert%2Fparquet/default/train/0000.parquet?download=true"
@@ -68,7 +74,8 @@ def main():
     if "data" in st.session_state:
         data = st.session_state["data"]
     elif load_button:
-        data = data_loader()
+        with st.spinner("Loading dataset"):
+            data = data_loader()
         st.session_state["data"] = data
     else:
         return
@@ -135,7 +142,8 @@ def main():
 
     vec_button = st.button("Vectorize")
     if vec_button:
-        text_vectors = vectorizer()
+        with st.spinner("Vectorizing"):
+            text_vectors = vectorizer()
         st.session_state["text_vectors"] = text_vectors
     elif "text_vectors" in st.session_state:
         text_vectors = st.session_state["text_vectors"]
@@ -187,10 +195,7 @@ def main():
         data.columns,
     )
 
-    label_column = st.selectbox(
-        "Select label column",
-        data.columns,
-    )
+    label_column = st.selectbox("Select label column", list(data.columns) + ["nolabel"])
 
     vis_button = st.button("Visualize")
     if not vis_button:
@@ -198,27 +203,34 @@ def main():
 
     match option_visualizer:
         case "t-SNE":
-            results = perform_tsne(
-                text_vectors,
+            visualizer = partial(
+                perform_tsne,
                 perplexity=perplexity,
                 learning_rate=learning_rate,
                 random_seed=random_seed,
             )
         case "UMAP":
-            results = perform_umap(
-                text_vectors,
+            visualizer = partial(
+                perform_umap,
                 n_neighbors=n_neighbors,
                 min_dist=min_dist,
                 random_seed=random_seed,
             )
         case "PaCMAP":
-            results = perform_pacmap(
-                text_vectors,
+            visualizer = partial(
+                perform_pacmap,
                 n_neighbors=n_neighbors,
                 random_seed=random_seed,
             )
 
-    data["label"] = data[label_column]
+    with st.spinner("Visualizing"):
+        results = visualizer(text_vectors)
+
+    match label_column:
+        case "nolabel":
+            data["label"] = None
+        case _:
+            data["label"] = data[label_column]
 
     data["x"], data["y"] = results[:, 0], results[:, 1]
 

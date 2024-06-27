@@ -157,37 +157,34 @@ def main():
 
     match option_visualizer:
         case "t-SNE":
-            perplexity = st.number_input(
+            perplexity = st.slider(
                 "t-SNE: Perplexity",
                 value=30,
                 min_value=5,
                 max_value=50,
-            )
-            learning_rate = st.number_input(
-                "t-SNE: Learning Rate",
-                value=200.0,
-                min_value=10.0,
-                max_value=1000.0,
+                step=1,
             )
         case "UMAP":
-            n_neighbors = st.number_input(
+            n_neighbors = st.slider(
                 "UMAP: Number of Neighbors",
                 value=15,
                 min_value=2,
                 max_value=50,
+                step=1,
             )
-            min_dist = st.number_input(
+            min_dist = st.slider(
                 "UMAP: Minimum Distance",
                 value=0.1,
                 min_value=0.001,
                 max_value=0.5,
             )
         case "PaCMAP":
-            n_neighbors = st.number_input(
+            n_neighbors = st.slider(
                 "PaCMAP: Number of Neighbors",
                 value=10,
                 min_value=3,
                 max_value=50,
+                step=1,
             )
 
     tooltip_tags = st.multiselect(
@@ -206,7 +203,6 @@ def main():
             visualizer = partial(
                 perform_tsne,
                 perplexity=perplexity,
-                learning_rate=learning_rate,
                 random_seed=random_seed,
             )
         case "UMAP":

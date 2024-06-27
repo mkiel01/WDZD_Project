@@ -116,6 +116,11 @@ def main():
                 max_value=50,
             )
 
+    tooltip_tags = st.multiselect(
+        "Tootlip tags",
+        data.columns,
+    )
+
     vis_button = st.button("Visualize")
     if not vis_button:
         return
@@ -152,14 +157,14 @@ def main():
     points = (
         alt.Chart()
         .mark_point()
-        .encode(x="x", y="y", color=alt.condition(brush, "label", alt.value("lightgray")), tooltip=["label", "user", "date", "text"])
+        .encode(x="x", y="y", color=alt.condition(brush, "label", alt.value("lightgray")), tooltip=tooltip_tags)
     ).transform_filter(click)\
     .add_selection(brush)\
     
     points_interactive = (
         alt.Chart()
         .mark_point()
-        .encode(x="x", y="y", color=alt.condition(brush, "label", alt.value("lightgray")), tooltip=["label", "user", "date", "text"])
+        .encode(x="x", y="y", color=alt.condition(brush, "label", alt.value("lightgray")), tooltip=tooltip_tags)
     ).transform_filter(click)\
     .interactive()
 

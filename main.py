@@ -83,13 +83,38 @@ def main():
 
     match option_visualizer:
         case "t-SNE":
-            perplexity = st.number_input("t-SNE: Perplexity", value=30, min_value=5, max_value=50,)
-            learning_rate = st.number_input("t-SNE: Learning Rate", value=200.0, min_value=10.0, max_value=1000.0,)
+            perplexity = st.number_input(
+                "t-SNE: Perplexity",
+                value=30,
+                min_value=5,
+                max_value=50,
+            )
+            learning_rate = st.number_input(
+                "t-SNE: Learning Rate",
+                value=200.0,
+                min_value=10.0,
+                max_value=1000.0,
+            )
         case "UMAP":
-            n_neighbors = st.number_input("UMAP: Number of Neighbors", value=15, min_value=2, max_value=50,)
-            min_dist = st.number_input("UMAP: Minimum Distance", value=0.1, min_value=0.001, max_value=0.5,)
+            n_neighbors = st.number_input(
+                "UMAP: Number of Neighbors",
+                value=15,
+                min_value=2,
+                max_value=50,
+            )
+            min_dist = st.number_input(
+                "UMAP: Minimum Distance",
+                value=0.1,
+                min_value=0.001,
+                max_value=0.5,
+            )
         case "PaCMAP":
-            n_neighbors = st.number_input("PaCMAP: Number of Neighbors", value=10, min_value=3, max_value=50,)
+            n_neighbors = st.number_input(
+                "PaCMAP: Number of Neighbors",
+                value=10,
+                min_value=3,
+                max_value=50,
+            )
 
     vis_button = st.button("Visualize")
     if not vis_button:
@@ -97,18 +122,34 @@ def main():
 
     match option_visualizer:
         case "t-SNE":
-            results = perform_tsne(text_vectors, perplexity=perplexity, learning_rate=learning_rate, random_seed=random_seed,)
+            results = perform_tsne(
+                text_vectors,
+                perplexity=perplexity,
+                learning_rate=learning_rate,
+                random_seed=random_seed,
+            )
         case "UMAP":
-            results = perform_umap(text_vectors, n_neighbors=n_neighbors, min_dist=min_dist, random_seed=random_seed,)
+            results = perform_umap(
+                text_vectors,
+                n_neighbors=n_neighbors,
+                min_dist=min_dist,
+                random_seed=random_seed,
+            )
         case "PaCMAP":
-            results = perform_pacmap(text_vectors, n_neighbors=n_neighbors, random_seed=random_seed,)
+            results = perform_pacmap(
+                text_vectors,
+                n_neighbors=n_neighbors,
+                random_seed=random_seed,
+            )
 
     label_mapping = {0: "negative", 2: "neutral", 4: "positive"}
     data["label"] = data["target"].apply(lambda v: label_mapping.get(v, ""))
 
     # Calculate metrics using LocalMetric class
     local_metric = LocalMetric()
-    local_metric.calculate_knn_gain_and_dr_quality(text_vectors, results, data["label"].values, option_visualizer)
+    local_metric.calculate_knn_gain_and_dr_quality(
+        text_vectors, results, data["label"].values, option_visualizer
+    )
 
     data["x"], data["y"] = results[:, 0], results[:, 1]
 
@@ -123,12 +164,13 @@ def main():
     # Display metrics
     metrics_kg = local_metric.visualize_kg()
     metrics_rnx = local_metric.visualize_rnx()
-    
+
     mean_L_cf = np.mean(local_metric.L_cf)
     st.write(f"Mean class fidelity (CF): {mean_L_cf:.4f}")
-    
+
     st.pyplot(metrics_kg)
     st.pyplot(metrics_rnx)
+
 
 if __name__ == "__main__":
     main()

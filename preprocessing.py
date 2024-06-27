@@ -38,7 +38,7 @@ def vectorize_with_avg_word2vec(data, max_features=100):
 
 
 def vectorize_with_pretrained_avg_word2vec(data):
-    glove_vectors = gensim.downloader.load('glove-twitter-25')
+    glove_vectors = gensim.downloader.load("glove-twitter-25")
     vocab, vectors = glove_vectors.key_to_index, glove_vectors.vectors
 
     def word2vec(w):

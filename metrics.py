@@ -1,6 +1,4 @@
-import numba
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 import random
 
@@ -63,6 +61,7 @@ def eval_rnx(Q):
     rnxk = (N_1 * qnxk[: N_1 - 1] - arr_K) / (N_1 - arr_K)
     # Returning
     return rnxk
+
 
 def eval_dr_quality(d_hd, d_ld):
     # Computing the co-ranking matrix of the embedding, and the R_{NX}(K) curve.
@@ -253,33 +252,33 @@ def viz_qa(
 
 def calculate_cf_nn(X_hd, X_ld, labels, nn_max=100):
     from sklearn.neighbors import NearestNeighbors
-    
+
     n_samples = X_hd.shape[0]
-    
+
     # Find nearest neighbors in high-dimensional space
     nn_hd = NearestNeighbors(n_neighbors=nn_max).fit(X_hd)
     hd_neighbors = nn_hd.kneighbors(X_hd, return_distance=False)
-    
+
     # Find nearest neighbors in low-dimensional space
     nn_ld = NearestNeighbors(n_neighbors=nn_max).fit(X_ld)
     ld_neighbors = nn_ld.kneighbors(X_ld, return_distance=False)
-    
+
     cf_nn = np.zeros(nn_max)
-    
-    for nn in range(1, nn_max+1):
+
+    for nn in range(1, nn_max + 1):
         correct_classifications = 0
         for i in range(n_samples):
             # Check if the neighbors belong to the same class
-            hd_neighbor_indices = hd_neighbors[i, 1:nn+1]
-            ld_neighbor_indices = ld_neighbors[i, 1:nn+1]
+            hd_neighbor_indices = hd_neighbors[i, 1 : nn + 1]
+            ld_neighbor_indices = ld_neighbors[i, 1 : nn + 1]
             hd_labels = labels[hd_neighbor_indices]
             ld_labels = labels[ld_neighbor_indices]
-            
+
             # Count correctly classified neighbors
             correct_classifications += np.sum(hd_labels == ld_labels)
-        
-        cf_nn[nn-1] = correct_classifications / (nn * n_samples)
-    
+
+        cf_nn[nn - 1] = correct_classifications / (nn * n_samples)
+
     cf = np.mean(cf_nn)
     return cf, cf_nn
 
@@ -320,7 +319,9 @@ class LocalMetric:
         rnxk, auc_rnx = eval_dr_quality(d_hd=d_hd, d_ld=d_ld)
         kg, auc_kg = knngain(d_hd=d_hd, d_ld=d_ld, labels=labels_test)
 
-        cf, cf_nn = calculate_cf_nn(X_hds_test, X_lds_test, labels_test, nn_max=X_hds_test.shape[0])
+        cf, cf_nn = calculate_cf_nn(
+            X_hds_test, X_lds_test, labels_test, nn_max=X_hds_test.shape[0]
+        )
 
         self.L_cf.append(cf_nn)
         self.L_rnx.append(rnxk)
@@ -352,6 +353,7 @@ class LocalMetric:
             xlabel="Neighborhood size $K$",
             ylabel="$R_{NX}(K)$",
         )
+
     def visualize_kg(self):
         Lmarkers = random.sample(markers, self.number_of_methods)
         Lcols = random.sample(colors, self.number_of_methods)

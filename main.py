@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import altair as alt
 import streamlit as st
 
@@ -18,9 +19,19 @@ from visualizers import (
 from metrics import LocalMetric
 
 
-def on_change():
+def remove_text_vectors():
     if "text_vectors" in st.session_state:
         del st.session_state["text_vectors"]
+
+
+def remove_data():
+    if "data" in st.session_state:
+        del st.session_state["data"]
+
+
+def remove_data_and_text_vectors():
+    remove_data()
+    remove_text_vectors()
 
 
 def main():
@@ -28,14 +39,39 @@ def main():
 
     random_seed = st.number_input(label="Random seed", min_value=0)
 
+    option_dataset = st.selectbox(
+        "Dataset",
+        (
+            "custom",
+            "airbnb_embeddings",
+            "embedded_movies_small",
+        ),
+        on_change=remove_data_and_text_vectors,
+    )
 
+    match option_dataset:
+        case "custom":
+            uploaded_file = st.file_uploader(
+                "Choose a CSV file with Tweets", type="csv"
+            )
+            data_loader = lambda: load_data(uploaded_file)
+        case "airbnb_embeddings":
+            data_loader = lambda: pd.read_parquet(
+                "https://huggingface.co/datasets/MongoDB/airbnb_embeddings/resolve/refs%2Fconvert%2Fparquet/default/train/0000.parquet?download=true"
+            )
+        case "embedded_movies_small":
+            data_loader = lambda: pd.read_parquet(
+                "hf://datasets/acloudfan/embedded_movies_small/data/train-00000-of-00001.parquet"
+            )
 
-    uploaded_file = st.file_uploader("Choose a CSV file with Tweets", type="csv")
-
-    if uploaded_file is None:
+    load_button = st.button("Load dataset")
+    if "data" in st.session_state:
+        data = st.session_state["data"]
+    elif load_button:
+        data = data_loader()
+        st.session_state["data"] = data
+    else:
         return
-
-    data = load_data(uploaded_file)
 
     data_len = len(data)
     desired_data_len = st.slider(
@@ -43,10 +79,23 @@ def main():
         min_value=1,
         max_value=data_len,
         value=data_len,
-        on_change=on_change,
+        on_change=remove_text_vectors,
     )
     if desired_data_len < data_len:
         data = data.sample(n=desired_data_len, random_state=random_seed)
+
+    dataframe_view_select = st.selectbox(
+        "View dataframe",
+        (
+            "head",
+            "full",
+        ),
+    )
+    match dataframe_view_select:
+        case "head":
+            st.write(data.head())
+        case "full":
+            st.write(data)
 
     option_vectorizer = st.selectbox(
         "Vectorizer/Embeddings",
@@ -57,28 +106,39 @@ def main():
             "pretrained averaged word2vec",
             "doc2vec",
         ),
-        on_change=on_change,
+        on_change=remove_text_vectors,
     )
+
+    text_or_embeddings_col = st.selectbox(
+        "Column with embeddings/texts",
+        data.columns,
+    )
+
+    get_text_or_embeddings = lambda: data[text_or_embeddings_col]
 
     match option_vectorizer:
         case "existing embeddings":
-            embedding_col = st.selectbox(
-                "Column with embeddings", data.columns,
-            )
-            vectorizer = lambda _: data[embedding_col]
+            vectorizer = lambda: np.array(list(map(np.array, get_text_or_embeddings())))
         case "TF-IDF":
-            vectorizer = vectorize_with_tfidf
+            vectorizer = lambda: vectorize_with_tfidf(
+                preprocess_text(get_text_or_embeddings())
+            )
         case "averaged word2vec":
-            vectorizer = vectorize_with_avg_word2vec
+            vectorizer = lambda: vectorize_with_avg_word2vec(
+                preprocess_text(get_text_or_embeddings)
+            )
         case "pretrained averaged word2vec":
-            vectorizer = vectorize_with_pretrained_avg_word2vec
+            vectorizer = lambda: vectorize_with_pretrained_avg_word2vec(
+                preprocess_text(data[text_or_embeddings_col])
+            )
         case "doc2vec":
-            vectorizer = vectorize_with_doc2vec
+            vectorizer = lambda: vectorize_with_doc2vec(
+                preprocess_text(data[text_or_embeddings_col])
+            )
 
     vec_button = st.button("Vectorize")
     if vec_button:
-        text_data = preprocess_text(data["text"])
-        text_vectors = vectorizer(text_data)
+        text_vectors = vectorizer()
         st.session_state["text_vectors"] = text_vectors
     elif "text_vectors" in st.session_state:
         text_vectors = st.session_state["text_vectors"]
@@ -129,7 +189,7 @@ def main():
         "Tootlip tags",
         data.columns,
     )
-    
+
     label_column = st.selectbox(
         "Select label column",
         data.columns,
@@ -170,23 +230,39 @@ def main():
     points = (
         alt.Chart(title="Selection chart")
         .mark_point()
-        .encode(x="x", y="y", color=alt.condition(brush, "label", alt.value("lightgray")), tooltip=tooltip_tags)
-    ).transform_filter(click)\
-    .add_selection(brush)\
-    
+        .encode(
+            x="x",
+            y="y",
+            color=alt.condition(brush, "label", alt.value("lightgray")),
+            tooltip=tooltip_tags,
+        )
+        .transform_filter(click)
+        .add_selection(brush)
+    )
     points_interactive = (
         alt.Chart(title="Interactive chart")
         .mark_point()
-        .encode(x="x", y="y", color=alt.condition(brush, "label", alt.value("lightgray")), tooltip=tooltip_tags)
-    ).transform_filter(click)\
-    .interactive()
+        .encode(
+            x="x",
+            y="y",
+            color=alt.condition(brush, "label", alt.value("lightgray")),
+            tooltip=tooltip_tags,
+        )
+        .transform_filter(click)
+        .interactive()
+    )
 
     hist = (
         alt.Chart(title="Class distribution")
         .mark_bar()
-        .encode(x="count()", y="label", color=alt.condition(click, "label", alt.value("lightgray")))
-    ).add_selection(click)\
-    .transform_filter(brush)
+        .encode(
+            x="count()",
+            y="label",
+            color=alt.condition(click, "label", alt.value("lightgray")),
+        )
+        .add_selection(click)
+        .transform_filter(brush)
+    )
 
     chart = alt.vconcat(points, hist, points_interactive, data=data)
 

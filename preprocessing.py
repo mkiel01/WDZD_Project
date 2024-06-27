@@ -67,5 +67,4 @@ def vectorize_with_doc2vec(data, max_features=100):
         min_count=1,
         workers=4,
     )
-    model.infer_vector()
     return model.dv.vectors

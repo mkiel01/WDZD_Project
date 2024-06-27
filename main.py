@@ -82,7 +82,7 @@ def main():
 
     data_len = len(data)
     start, end = st.slider(
-        "Adjust desired data size",
+        "Select rows from dataset",
         value=[0, data_len],
         on_change=remove_text_vectors,
     )

@@ -129,6 +129,11 @@ def main():
         "Tootlip tags",
         data.columns,
     )
+    
+    label_column = st.selectbox(
+        "Select label column",
+        data.columns,
+    )
 
     vis_button = st.button("Visualize")
     if not vis_button:
@@ -156,8 +161,7 @@ def main():
                 random_seed=random_seed,
             )
 
-    label_mapping = {0: "negative", 2: "neutral", 4: "positive"}
-    data["label"] = data["target"].apply(lambda v: label_mapping.get(v, ""))
+    data["label"] = data[label_column]
 
     data["x"], data["y"] = results[:, 0], results[:, 1]
 

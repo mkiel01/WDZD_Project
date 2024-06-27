@@ -168,21 +168,21 @@ def main():
     click = alt.selection_multi(encodings=["color"])
     brush = alt.selection_interval(encodings=["x", "y"])
     points = (
-        alt.Chart()
+        alt.Chart(title="Selection chart")
         .mark_point()
         .encode(x="x", y="y", color=alt.condition(brush, "label", alt.value("lightgray")), tooltip=tooltip_tags)
     ).transform_filter(click)\
     .add_selection(brush)\
     
     points_interactive = (
-        alt.Chart()
+        alt.Chart(title="Interactive chart")
         .mark_point()
         .encode(x="x", y="y", color=alt.condition(brush, "label", alt.value("lightgray")), tooltip=tooltip_tags)
     ).transform_filter(click)\
     .interactive()
 
     hist = (
-        alt.Chart()
+        alt.Chart(title="Class distribution")
         .mark_bar()
         .encode(x="count()", y="label", color=alt.condition(click, "label", alt.value("lightgray")))
     ).add_selection(click)\

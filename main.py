@@ -24,7 +24,7 @@ def on_change():
 
 
 def main():
-    st.title("Twitter Sentiment t-SNE Reduction")
+    st.title("Text Datasets Visualization")
 
     random_seed = st.number_input(label="Random seed", min_value=0)
 
@@ -145,15 +145,8 @@ def main():
     label_mapping = {0: "negative", 2: "neutral", 4: "positive"}
     data["label"] = data["target"].apply(lambda v: label_mapping.get(v, ""))
 
-    # Calculate metrics using LocalMetric class
-    local_metric = LocalMetric()
-    local_metric.calculate_knn_gain_and_dr_quality(
-        text_vectors, results, data["label"].values, option_visualizer
-    )
-
     data["x"], data["y"] = results[:, 0], results[:, 1]
 
-    color = alt.Color("label")
     click = alt.selection_multi(encodings=["color"])
     brush = alt.selection_interval(encodings=["x", "y"])
     points = (
@@ -180,6 +173,12 @@ def main():
     chart = alt.vconcat(points, hist, points_interactive, data=data)
 
     st.altair_chart(chart)
+
+    # Calculate metrics using LocalMetric class
+    local_metric = LocalMetric()
+    local_metric.calculate_knn_gain_and_dr_quality(
+        text_vectors, results, data["label"].values, option_visualizer
+    )
 
     # Display metrics
     metrics_kg = local_metric.visualize_kg()

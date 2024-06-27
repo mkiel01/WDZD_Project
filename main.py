@@ -74,15 +74,12 @@ def main():
         return
 
     data_len = len(data)
-    desired_data_len = st.slider(
+    start, end = st.slider(
         "Adjust desired data size",
-        min_value=1,
-        max_value=data_len,
-        value=data_len,
+        value=[0, data_len],
         on_change=remove_text_vectors,
     )
-    if desired_data_len < data_len:
-        data = data.sample(n=desired_data_len, random_state=random_seed)
+    data = data[start:end]
 
     dataframe_view_select = st.selectbox(
         "View dataframe",

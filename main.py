@@ -44,10 +44,10 @@ def main():
     option_dataset = st.selectbox(
         "Dataset",
         (
+            "embedded_movies_small",
+            "airbnb_embeddings",
             "load from csv file",
             "url to parquet file",
-            "airbnb_embeddings",
-            "embedded_movies_small",
         ),
         on_change=remove_data_and_text_vectors,
     )

@@ -5,6 +5,8 @@ This application can visualize text datasets by reducing dimensionality of exist
 ## Usage
 
 ```
+git clone https://github.com/mkiel01/WDZD_Project.git
+cd WDZD_Project
 docker build . --tag viz-texts
 docker run -p 8501:8501 viz-texts
 ```

@@ -264,7 +264,7 @@ def main():
         .mark_bar()
         .encode(
             x="count()",
-            y="label",
+            y=alt.Y("label", title=label_column),
             color=alt.condition(click, "label", alt.value("lightgray")),
         )
         .add_selection(click)

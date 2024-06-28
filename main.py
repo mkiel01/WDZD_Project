@@ -129,15 +129,15 @@ def main():
             )
         case "averaged word2vec":
             vectorizer = lambda: vectorize_with_avg_word2vec(
-                preprocess_text(get_text_or_embeddings)
+                preprocess_text(get_text_or_embeddings())
             )
         case "pretrained averaged word2vec":
             vectorizer = lambda: vectorize_with_pretrained_avg_word2vec(
-                preprocess_text(data[text_or_embeddings_col])
+                preprocess_text(get_text_or_embeddings())
             )
         case "doc2vec":
             vectorizer = lambda: vectorize_with_doc2vec(
-                preprocess_text(data[text_or_embeddings_col])
+                preprocess_text(get_text_or_embeddings())
             )
 
     vec_button = st.button("Vectorize")

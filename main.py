@@ -225,6 +225,8 @@ def main():
     match label_column:
         case "nolabel":
             data["label"] = None
+        case "genres":
+            data["label"] = list(map(lambda r: r[1] if len(r) > 1 else r[0], list(data[label_column])))
         case _:
             data["label"] = data[label_column]
 
